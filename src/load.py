@@ -43,6 +43,22 @@ RENOMEAR = {
 }
 
 
+# De-para de bandeira: a mesma empresa aparece com nomes diferentes ao longo
+# do tempo. Conferido nas datas de primeira/ultima aparicao de cada rotulo em AL:
+#   PETROBRAS DISTRIBUIDORA S.A. ate 02/2021 -> VIBRA ENERGIA 03/2021 a 07/2023
+#   -> VIBRA a partir de 07/2023 (rebatismo da BR Distribuidora)
+#   ALESAT ate 05/2024 -> ALE a partir de 05/2024 (rotulo muda, empresa continua)
+DE_PARA_BANDEIRA = {
+    "PETROBRAS DISTRIBUIDORA S.A.": "VIBRA",
+    "VIBRA ENERGIA": "VIBRA",
+    "VIBRA": "VIBRA",
+    "ALESAT": "ALE",
+    "ALE": "ALE",
+    "PETROX DISTRIBUIDORA": "PETROX",
+    "SETTA DISTRIBUIDORA": "SETTA",
+}
+
+
 def normalizar_nome(coluna: str) -> str:
     """'Regiao - Sigla' -> 'regiao_sigla'"""
     sem_acento = unicodedata.normalize("NFKD", coluna)
@@ -121,6 +137,15 @@ def limpar(df: pd.DataFrame) -> pd.DataFrame:
 
     df["cnpj"] = df["cnpj"].str.replace(r"\D", "", regex=True)
 
+    # Bandeira harmonizada (a coluna original 'bandeira' fica intacta).
+    df["bandeira_grupo"] = df["bandeira"].map(DE_PARA_BANDEIRA).fillna(df["bandeira"])
+    df["bandeira_branca"] = df["bandeira_grupo"] == "BRANCA"
+
+    # Comum e aditivada tem ~54 centavos de diferenca: nunca misturar na serie-alvo.
+    df["tipo_gasolina"] = df["produto"].map(
+        {"GASOLINA": "comum", "GASOLINA ADITIVADA": "aditivada"}
+    )
+
     # Semana de referencia (segunda-feira da semana da coleta).
     df["semana"] = df["data_coleta"].dt.to_period("W-SUN").dt.start_time
 
@@ -172,6 +197,9 @@ def main() -> None:
 
     PROCESSED.mkdir(parents=True, exist_ok=True)
     validos.to_parquet(PROCESSED / "precos_al.parquet", index=False)
+    comum = validos[validos["tipo_gasolina"] == "comum"]
+    comum.to_parquet(PROCESSED / "precos_al_comum.parquet", index=False)
+    print(f"{len(comum)} linhas de gasolina comum -> data/processed/precos_al_comum.parquet")
     if not rejeitados.empty:
         rejeitados.to_csv(PROCESSED / "rejeitados.csv", index=False)
 

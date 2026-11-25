@@ -99,7 +99,13 @@ Consequências práticas:
   gasolina comum), 5 municípios, 0 rejeições.
 - Notebooks 00 (diagnóstico) e 01 (cobertura amostral) prontos. Docs em
   `docs/`.
-- Pendente: de-para de bandeira no `load.py`; filtrar só gasolina comum
-  na série-alvo.
-- **Próximo passo:** baseline de persistência, usando a média estadual
-  só com municípios de cobertura contínua.
+- De-para de bandeira feito no `load.py` (`bandeira_grupo`): PETROBRAS
+  DISTRIBUIDORA / VIBRA ENERGIA / VIBRA → VIBRA; ALESAT / ALE → ALE (nos
+  dados a ALESAT vira ALE em 05/2024, não some na Ipiranga). Gera também
+  `precos_al_comum.parquet`.
+- `src/series.py`: mediana por município-semana em calendário completo e
+  índice AL de pesos fixos (Maceió 19/33, Arapiraca 14/33).
+- Notebook 02: nenhum modelo bate a persistência (MAE 7,8 centavos com
+  defasagem de 2 semanas, teste 2024+). Notebook 03: H2 confirmada
+  (branca ~7 centavos mais barata, caindo para ~3 em 2025–26); H1 sem evidência.
+- **Próximo passo:** feature de anúncios de reajuste da Petrobras; dashboard.
